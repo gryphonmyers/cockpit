@@ -5,7 +5,8 @@ namespace Collections\Controller;
 class RestApi extends \LimeExtra\Controller {
     private function get_item_from_hash($propName, $val) {
         static $cache = [];
-        if (substr($propName, 0, 1) != "_" && preg_match('/^[0-9a-fA-F]{24}$/', $val)) {
+        
+        if (substr($propName, 0, 1) != "_" && gettype($val) == "string" && preg_match('/^[0-9a-fA-F]{24}$/', $val)) {
             if (!array_key_exists($val, $cache)) {
                 if (!array_key_exists($propName, $cache)) {
                     $cache[$propName] = $this->app->db->findOne("common/collections",["name"=>$propName]);
