@@ -199,7 +199,10 @@ class I18n extends \Lime\Helper {
         "yo" => "Yoruba",
         "za" => "Zhuang",
         "zh" => "Chinese",
-        "zu" => "Zulu"
+        "zu" => "Zulu",
+		"gb" => "British",
+		"au" => "Australian",
+		"mx" => "Latin American"
     );
 
 
