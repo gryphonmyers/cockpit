@@ -93,6 +93,21 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="uk-margin-small-top uk-text-small uk-text-muted" if="{field.type == 'repeater' && parent.mapping[field.name] && parent.filter[field.name]}">
+                            <hr>
+                            <!-- @lang('Use field:')
+                            <div class="uk-form-select">
+                                <a>{parent.filterData[field.name] || '(Select field...)'}</a>
+                                <select bind="filterData['{field.name}'] ? filterData['{field.name}']['value'] : ((filterData['{field.name}'] = {}) && filterData['{field.name}']['value'])">
+                                    <option value=""></option>
+                                    <option value="{f.name}" each="{f in field.options.fields}">{f.name}</option>
+                                </select>
+                            </div> -->
+                            <div class="uk-margin-small-top">
+                                @lang('Import field value from:')
+                                <input bind="filterData['{field.name}']" type="text" placeholder="">
+                            </div>
+                        </div>
                     </td>
                     <td>
                         <div class="uk-text-center">
@@ -282,7 +297,7 @@
 
                             Object.keys($this.mapping).forEach(function(k, val, d){
                                 val = c[$this.mapping[k]];
-                                
+
                                 d   = $this.filterData[k];
 
                                 if ($this.filter[k]) {
