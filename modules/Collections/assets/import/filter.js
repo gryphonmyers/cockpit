@@ -60,6 +60,38 @@
             this.resolve(value);
         },
 
+        repeater: function(value, field, extra) {
+            // debugger;
+            if (_.isObjectLike(value)) {
+                // var fields = (field.options && _.keyBy(field.options.fields, "name")) || null;
+                if (Array.isArray(field.options.fields)) {
+                    value = _.map(value, function(val){
+                        return {
+                            field: field.options.fields[0],
+                            value: (extra && val[extra]) || val
+                        };
+                    });
+                } else if (_.isObjectLike(field.options.fields)) {
+                    value = _.map(value, function(val){
+                        return {
+                            field: field.options.fields,
+                            value: (extra && val[extra]) || val
+                        };
+                    });
+                } else {
+                    value = _.map(value, function(val){
+                        return {
+                            field: {type:"text"},
+                            value: (extra && val[extra]) || val
+                        };
+                    });
+                }
+            } else {
+                value = null;
+            }
+            this.resolve(value);
+        },
+
         time: function(value, field, extra){
             switch(extra) {
                 case "Unix timestamp: ms":
