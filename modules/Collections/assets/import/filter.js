@@ -61,7 +61,6 @@
         },
 
         repeater: function(value, field, extra) {
-            // debugger;
             if (_.isObjectLike(value)) {
                 // var fields = (field.options && _.keyBy(field.options.fields, "name")) || null;
                 if (Array.isArray(field.options.fields)) {
