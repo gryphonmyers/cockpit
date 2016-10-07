@@ -23,7 +23,7 @@
 
         tags: function(value, field, extra){
             if (Array.isArray(value)) {
-                return _.reject(_.map(value, function(item){
+                this.resolve(_.reject(_.map(value, function(item){
                     switch (typeof item) {
                         case 'object':
                             return (_.isObjectLike(item) && item[extra]) || null;
@@ -32,9 +32,10 @@
                         default:
                             return null;
                     }
-                }), _.isEmpty)
+                }), _.isEmpty));
+            } else {
+                this.resolve(null);
             }
-            return null;
         },
 
         text: function(value) {
