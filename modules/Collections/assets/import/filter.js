@@ -20,10 +20,10 @@
 
             return p;
         },
-        
+
         tags: function(value, field, extra){
             if (Array.isArray(value)) {
-                value = _.reject(_.map(value, function(item){
+                return _.reject(_.map(value, function(item){
                     switch (typeof item) {
                         case 'object':
                             return (_.isObjectLike(item) && item[extra]) || null;
