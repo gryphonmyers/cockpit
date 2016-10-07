@@ -20,6 +20,22 @@
 
             return p;
         },
+        
+        tags: function(value, field, extra){
+            if (Array.isArray(value)) {
+                value = _.reject(_.map(value, function(item){
+                    switch (typeof item) {
+                        case 'object':
+                            return (_.isObjectLike(item) && item[extra]) || null;
+                        case 'string':
+                            return item;
+                        default:
+                            return null;
+                    }
+                }), _.isEmpty)
+            }
+            return null;
+        },
 
         text: function(value) {
             this.resolve(value.toString());
