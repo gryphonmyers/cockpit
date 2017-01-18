@@ -82,6 +82,13 @@
                                 <option each="{h,hidx in data.headers}" value="{h}">{h}</option>
                             </select>
                         </div>
+                        <div class="uk-margin-small-top uk-text-small uk-text-muted" if="{field.type == 'repeater' && parent.mapping[field.name] && parent.filter[field.name]}">
+                            <hr>
+                            @lang('Enter field name:')
+                            <div class="uk-form-select">
+                                <input type="text" bind="filterData['{field.name}']">
+                            </div>
+                        </div>
                         <div class="uk-margin-small-top uk-text-small uk-text-muted" if="{field.type == 'collectionlink' && parent.mapping[field.name] && parent.filter[field.name]}">
                             <hr>
                             @lang('Match against:')
