@@ -14,6 +14,7 @@
 
             <a><i class="uk-icon-bars"></i> {{ @$collection['label'] ? $collection['label']:$collection['name'] }}</a>
 
+            @if($app->module('collections')->hasaccess($collection['name'], 'collection_edit'))
             <div class="uk-dropdown">
                 <ul class="uk-nav uk-nav-dropdown">
                     <li class="uk-nav-header">@lang('Actions')</li>
@@ -23,6 +24,7 @@
                     <li class="uk-text-truncate"><a href="@route('/collections/import/collection/'.$collection['name'])">@lang('Import entries')</a></li>
                 </ul>
             </div>
+            @endif
 
         </li>
     </ul>
@@ -73,7 +75,7 @@
                 <div class="uk-form-icon uk-form uk-width-1-1 uk-text-muted">
 
                     <i class="uk-icon-search"></i>
-                    <input class="uk-width-1-1 uk-form-large uk-form-blank" type="text" name="txtfilter" placeholder="@lang('Filter items...')" onchange="{ updatefilter }">
+                    <input class="uk-width-1-1 uk-form-large uk-form-blank" type="text" ref="txtfilter" placeholder="@lang('Filter items...')" onchange="{ updatefilter }">
 
                 </div>
             </div>
@@ -81,17 +83,20 @@
 
             <div class="uk-float-right">
 
-                <a class="uk-button uk-button-large uk-button-danger uk-animation-fade" onclick="{ removeselected }" if="{ selected.length }">
+                @if($app->module('collections')->hasaccess($collection['name'], 'entries_delete'))
+                <a class="uk-button uk-button-large uk-button-danger uk-animation-fade uk-margin-small-right" onclick="{ removeselected }" if="{ selected.length }">
                     @lang('Delete') <span class="uk-badge uk-badge-contrast uk-margin-small-left">{ selected.length }</span>
                 </a>
+                @endif
 
+                @if($app->module('collections')->hasaccess($collection['name'], 'entries_create'))
                 <a class="uk-button uk-button-large uk-button-primary" href="@route('/collections/entry/'.$collection['name'])"><i class="uk-icon-plus-circle uk-icon-justify"></i> @lang('Entry')</a>
-
+                @endif
             </div>
         </div>
 
 
-        <div class="uk-margin-top" if="{ !loading && (entries.length || filter) }">
+        <div class="uk-margin-top" show="{ !loading && (entries.length || filter) }">
 
             @render('collections:views/partials/entries'.($collection['sortable'] ? '.sortable':'').'.php', compact('collection'))
 
@@ -155,40 +160,43 @@
                 $this.update();
             });
 
-
-            if (this.collection.sortable) {
-
-                this.sort = {'_order': 1};
-
-                UIkit.sortable(this.sortableroot, {
-
-                    animation: false
-
-                }).element.on("change.uk.sortable", function(e, sortable, ele){
-
-                    if (App.$(e.target).is(':input')) return;
-
-                    var updates = [];
-
-                    App.$($this.sortableroot).children().each(function(idx) {
-
-                        updates.push({'_id':this.getAttribute('data-id'),'_order':idx});
-
-                    });
-
-                    if (updates.length) {
-
-                        App.callmodule('collections:save',[$this.collection.name, updates]).then(function(){
-                            App.ui.notify("Entries reordered", "success");
-                        });
-                    }
-
-                });
+            if (this.collection.sortable && this.refs.sortableroot) {
+                this.initSortable();
             }
 
             this.load();
 
         });
+
+        initSortable() {
+
+            this.sort = {'_order': 1};
+
+            UIkit.sortable(this.refs.sortableroot, {
+
+                animation: false
+
+            }).element.on("change.uk.sortable", function(e, sortable, ele){
+
+                if (App.$(e.target).is(':input')) return;
+
+                var updates = [];
+
+                App.$($this.refs.sortableroot).children().each(function(idx) {
+
+                    updates.push({'_id':this.getAttribute('data-id'),'_order':idx});
+
+                });
+
+                if (updates.length) {
+
+                    App.callmodule('collections:save',[$this.collection.name, updates]).then(function(){
+                        App.ui.notify("Entries reordered", "success");
+                    });
+                }
+
+            });
+        }
 
         remove(e, entry, idx) {
 
@@ -197,7 +205,7 @@
 
             App.ui.confirm("Are you sure?", function() {
 
-                App.callmodule('collections:remove', [this.collection.name, {'_id':entry._id}]).then(function(data) {
+                App.request('/collections/delete_entries/'+$this.collection.name, {filter: {'_id':entry._id}}).then(function(data) {
 
                     App.ui.notify("Entry removed", "success");
 
@@ -230,7 +238,7 @@
                         yepp = ($this.selected.indexOf(entry._id) === -1);
 
                         if (!yepp) {
-                            promises.push(App.callmodule('collections:remove', [$this.collection.name, {'_id':entry._id}]));
+                            promises.push(App.request('/collections/delete_entries/'+$this.collection.name, {filter: {'_id':entry._id}}));
                         }
 
                         return yepp;
@@ -358,7 +366,7 @@
 
             var load = this.filter ? true:false;
 
-            this.filter = this.txtfilter.value || null;
+            this.filter = this.refs.txtfilter.value || null;
 
             if (this.filter || load) {
                 this.entries = [];
@@ -376,11 +384,11 @@
 
             delete entry._id;
 
-            App.callmodule('collections:save',[this.collection.name, entry]).then(function(data) {
+            App.request('/collections/save_entry/'+this.collection.name, {"entry": entry}).then(function(entry) {
 
-                if (data.result) {
+                if (entry) {
 
-                    $this.entries.unshift(data.result);
+                    $this.entries.unshift(entry);
                     App.ui.notify("Entry duplicated", "success");
                     $this.update();
                 }

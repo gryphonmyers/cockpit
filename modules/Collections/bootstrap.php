@@ -171,7 +171,7 @@ $this->module("collections")->extend([
         $entries = (array)$this->app->storage->find("collections/{$collection}", $options);
 
         if (isset($options['populate']) && $options['populate']) {
-            $entries = $this->_populate($_collection, $entries, is_numeric($options['populate']) ? intval($options['populate']) : false);
+            $entries = $this->_populate($entries, is_numeric($options['populate']) ? intval($options['populate']) : false);
         }
 
         $this->app->trigger('collections.find.after', [$name, &$entries, false]);
@@ -195,7 +195,7 @@ $this->module("collections")->extend([
         $entry = $this->app->storage->findOne("collections/{$collection}", $criteria, $projection);
 
         if ($entry && $populate) {
-           $entry = $this->_populate($_collection, [$entry], is_numeric($populate) ? intval($populate) : false);
+           $entry = $this->_populate([$entry], is_numeric($populate) ? intval($populate) : false);
            $entry = $entry[0];
         }
 
@@ -335,7 +335,7 @@ $this->module("collections")->extend([
         return $this->app->storage->count("collections/{$collection}", $criteria);
     },
 
-    '_populate' => function($collection, $entries, $deep = false, $_deeplevel = -1) {
+    '_resolveLinedkItem' => function($link, $_id) {
 
         static $cache;
 
@@ -343,100 +343,99 @@ $this->module("collections")->extend([
             $cache = [];
         }
 
-        // a maximum of recursive level
-        if (is_numeric($deep) && $_deeplevel == $deep) {
-            return $entries;
+        if (!isset($cache[$link])) {
+            $cache[$link] = [];
         }
 
-        if (!$collection || !count($entries)) {
-            return $entries;
+        if (!isset($cache[$link][$_id])) {
+            $cache[$link][$_id] = $this->findOne($link, ['_id' => $_id]);
         }
 
-        $hasOne  = [];
-        $hasMany = [];
+        return $cache[$link][$_id];
+    },
 
-        foreach($collection['fields'] as &$field) {
+    '_populate' => function($items, $maxlevel=-1, $level=0) {
 
-            if ($field['type'] == 'collectionlink' && isset($field['options']['link']) && $field['options']['link']) {
+        if (!is_array($items)) {
+            return $items;
+        }
+        return cockpit_populate_collection($items);
+    }
+]);
 
-                if (isset($field['options']['multiple']) && $field['options']['multiple']) {
-                    $hasMany[$field['name']] = $field['options']['link'];
-                } else {
-                    $hasOne[$field['name']] = $field['options']['link'];
-                }
+function cockpit_populate_collection(&$items, $maxlevel = -1, $level = 0) {
 
-                if (!isset($cache[$field['options']['link']])) {
-                    $cache[$field['options']['link']] = [];
-                }
+    if (!is_array($items)) {
+        return $items;
+    }
+
+    if (is_numeric($maxlevel) && $maxlevel==$level) {
+        return $items;
+    }
+
+    foreach ($items as $k => &$v) {
+
+        if (is_array($items[$k])) {
+            $items[$k] = cockpit_populate_collection($items[$k], $maxlevel, ++$level);
+        }
+
+        if (isset($v['_id'], $v['link'])) {
+            $items[$k] = cockpit('collections')->_resolveLinedkItem($v['link'], $v['_id']);
+        }
+    }
+
+    return $items;
+}
+
+// ACL
+$app("acl")->addResource("collections", ['create', 'delete']);
+
+$this->module("collections")->extend([
+
+    'getCollectionsInGroup' => function($group = null, $extended = false) {
+
+        if (!$group) {
+            $group = $this->app->module('cockpit')->getGroup();
+        }
+
+        $_collections = $this->collections($extended);
+        $collections = [];
+
+        if ($this->app->module('cockpit')->isSuperAdmin()) {
+            return $_collections;
+        }
+
+        foreach ($_collections as $collection => $meta) {
+
+            if (isset($meta['acl'][$group]['entries_view']) && $meta['acl'][$group]['entries_view']) {
+                $collections[$collection] = $meta;
             }
         }
 
-        foreach ($entries as &$entry) {
+        return $collections;
+    },
 
-            // resolve hasOne
-            foreach ($hasOne as $_field => $_collection) {
+    'hasaccess' => function($collection, $action, $group = null) {
 
-                if (isset($entry[$_field]['_id'])) {
+        $collection = $this->collection($collection);
 
-                    if (!is_string($entry[$_field]['_id'])) {
-                        $entry[$_field]['_id'] = (string)$entry[$_field]['_id'];
-                    }
-
-                    if (!isset($cache[$_collection])) {
-                        $cache[$_collection] = [];
-                    }
-
-                    if (!isset($cache[$_collection][$entry[$_field]['_id']])) {
-                        $cache[$_collection][$entry[$_field]['_id']] = $this->findOne($_collection, ['_id' => $entry[$_field]['_id']]);
-                    }
-
-                    $entry[$_field] = $cache[$_collection][$entry[$_field]['_id']];
-
-                    if ($entry[$_field] && $deep) {
-                        $_entry = $this->_populate($this->collection($_collection), [$entry[$_field]], $deep, ($_deeplevel+1));
-                        $entry[$_field] = $_entry[0];
-                    }
-                }
-            }
-
-            // resolve hasMany
-            foreach ($hasMany as $_field => $_collection) {
-
-                if (isset($entry[$_field]) && $entry[$_field] && is_array($entry[$_field])) {
-
-                    $links = [];
-
-                    foreach ($entry[$_field] as $data) {
-
-                        if (!isset($data['_id'])) continue;
-
-                        if (!is_string($data['_id'])) {
-                            $data['_id'] = (string)$data['_id'];
-                        }
-
-                        if (!isset($cache[$_collection])) {
-                            $cache[$_collection] = [];
-                        }
-
-                        if (!isset($cache[$_collection][$data['_id']])) {
-                            $cache[$_collection][$data['_id']] = $this->findOne($_collection, ['_id' => $data['_id']]);
-                        }
-
-                        if ($cache[$_collection][$data['_id']]) {
-                            $links[] = $cache[$_collection][$data['_id']];
-                        }
-                    }
-
-                    if ($deep && count($links)) {
-                        $links = $this->_populate($this->collection($_collection), $links, $deep, ($_deeplevel+1));
-                    }
-
-                    $entry[$_field] = $links;
-                }
-            }
+        if (!$collection) {
+            return false;
         }
 
-        return $entries;
+        if (!$group) {
+            $group = $this->app->module('cockpit')->getGroup();
+        }
+
+        if ($this->app->module('cockpit')->isSuperAdmin($group)) {
+            return true;
+        }
+
+        if (isset($collection['acl'][$group][$action])) {
+            return $collection['acl'][$group][$action];
+        }
+
+        return false;
     }
 ]);
 

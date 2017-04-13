@@ -5,8 +5,18 @@ class RestApi extends \LimeExtra\Controller {
 
     public function get($collection=null) {
 
-        if (!$collection || !$this->app->module('collections')->exists($collection)) {
+        if (!$collection) {
             return false;
+        }
+
+        if (!$this->module('collections')->exists($collection)) {
+            return false;
+        }
+        
+        if ($this->module('cockpit')->getUser()) {
+            if (!$this->module('collections')->hasaccess($collection, 'entries_view')) {
+                return false;
+            }
         }
 
         $options = [];
@@ -39,7 +49,7 @@ class RestApi extends \LimeExtra\Controller {
             $fields[$field["name"]] = [
                 "name" => $field["name"],
                 "type" => $field["type"],
-                "localize" => $field["type"],
+                "localize" => $field["localize"],
                 "options" => $field["options"],
             ];
         }
@@ -51,5 +61,27 @@ class RestApi extends \LimeExtra\Controller {
         ];
 
         return $entries;
+    }
+
+    public function save($collection=null) {
+
+        $user = $this->module('cockpit')->getUser();
+        $data = $this->param('data', null);
+
+        if (!$collection || !$data) {
+            return false;
+        }
+
+        if (!$this->module('collections')->exists($collection)) {
+            return false;
+        }
+
+        if (!$this->module('collections')->hasaccess($collection, isset($data['_id']) ? 'entries_create':'entries_edit')) {
+            return false;
+        }
+
+        $data = $this->module('collections')->save($collection, $data);
+
+        return $data;
     }
 }

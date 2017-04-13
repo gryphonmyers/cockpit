@@ -8,12 +8,44 @@ class Admin extends \Cockpit\AuthController {
 
     public function index() {
 
-        return $this->render('collections:views/index.php');
+        $collections = $this->module('collections')->getCollectionsInGroup(null, true);
+
+        foreach ($collections as $collection => $meta) {
+            $collections[$collection]['allowed'] = [
+                'delete' => $this->module('cockpit')->hasaccess('collections', 'delete'),
+                'create' => $this->module('cockpit')->hasaccess('collections', 'create'),
+                'edit' => $this->module('collections')->hasaccess($collection, 'collection_edit'),
+                'entries_create' => $this->module('collections')->hasaccess($collection, 'collection_create')
+            ];
+        }
+
+        return $this->render('collections:views/index.php', compact('collections'));
+    }
+
+    public function _collections() {
+        return $this->module('collections')->collections();
+    }
+
+    public function _find() {
+
+        if ($this->param('collection') && $this->param('options')) {
+            return $this->module('collections')->find($this->param('collection'), $this->param('options'));
+        }
+
+        return false;
     }
 
     public function collection($name = null) {
 
-        $collection = [ 'name' => '', 'label' => '', 'color' => '', 'fields'=>[], 'sortable' => false, 'in_menu' => false ];
+        if ($name && !$this->module('collections')->hasaccess($name, 'collection_edit')) {
+            return $this->helper('admin')->denyRequest();
+        }
+
+        if (!$name && !$this->module('cockpit')->hasaccess('collections', 'create')) {
+            return $this->helper('admin')->denyRequest();
+        }
+
+        $collection = [ 'name' => '', 'label' => '', 'color' => '', 'fields'=>[], 'acl' => new \ArrayObject, 'sortable' => false, 'in_menu' => false ];
 
         if ($name) {
 
@@ -35,10 +67,22 @@ class Admin extends \Cockpit\AuthController {
             $templates[] = $col;
         }
 
-        return $this->render('collections:views/collection.php', compact('collection', 'templates'));
+        // acl groups
+        $aclgroups = [];
+
+        foreach ($this->app->helper("acl")->getGroups() as $group => $superAdmin) {
+
+            if (!$superAdmin) $aclgroups[] = $group;
+        }
+
+        return $this->render('collections:views/collection.php', compact('collection', 'templates', 'aclgroups'));
     }
 
     public function entries($collection) {
+
+        if (!$this->module('collections')->hasaccess($collection, 'entries_view')) {
+            return $this->helper('admin')->denyRequest();
+        }
 
         $collection = $this->module('collections')->collection($collection);
 
@@ -65,6 +109,14 @@ class Admin extends \Cockpit\AuthController {
     }
 
     public function entry($collection, $id = null) {
+
+        if ($id && !$this->module('collections')->hasaccess($collection, 'entries_view')) {
+            return $this->helper('admin')->denyRequest();
+        }
+
+        if (!$id && !$this->module('collections')->hasaccess($collection, 'entries_create')) {
+            return $this->helper('admin')->denyRequest();
+        }
 
         $collection = $this->module('collections')->collection($collection);
         $entry      = new \ArrayObject([]);
@@ -98,9 +150,60 @@ class Admin extends \Cockpit\AuthController {
         return $this->render($view, compact('collection', 'entry'));
     }
 
+    public function save_entry($collection) {
+
+        $collection = $this->module('collections')->collection($collection);
+
+        if (!$collection) {
+            return false;
+        }
+
+        $entry = $this->param('entry', false);
+
+        if (!$entry) {
+            return false;
+        }
+
+        if (!isset($entry['_id']) && !$this->module('collections')->hasaccess($collection['name'], 'entries_create')) {
+            return $this->helper('admin')->denyRequest();
+        }
+
+        if (isset($entry['_id']) && !$this->module('collections')->hasaccess($collection['name'], 'entries_edit')) {
+            return $this->helper('admin')->denyRequest();
+        }
+
+        $entry = $this->module('collections')->save($collection['name'], $entry);
+
+        return $entry;
+    }
+
+    public function delete_entries($collection) {
+
+        $collection = $this->module('collections')->collection($collection);
+
+        if (!$collection) {
+            return false;
+        }
+
+        if (!$this->module('collections')->hasaccess($collection['name'], 'entries_delete')) {
+            return $this->helper('admin')->denyRequest();
+        }
+
+        $filter = $this->param('filter', false);
+
+        if (!$filter) {
+            return false;
+        }
+
+        $this->module('collections')->remove($collection['name'], $filter);
+
+
+        return true;
+    }
+
     public function export($collection) {
 
-        if (!$this->app->module("cockpit")->hasaccess("collections", 'manage.collections')) {
+        if (!$this->app->module("cockpit")->hasaccess("collections", 'manage')) {
             return false;
         }
 

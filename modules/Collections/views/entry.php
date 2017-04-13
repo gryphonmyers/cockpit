@@ -8,9 +8,10 @@
 <div>
     <ul class="uk-breadcrumb">
         <li><a href="@route('/collections')">@lang('Collections')</a></li>
-        <li data-uk-dropdown="mode:'hover, delay:300'">
+        <li data-uk-dropdown="mode:'hover', delay:300">
             <a href="@route('/collections/entries/'.$collection['name'])"><i class="uk-icon-bars"></i> {{ @$collection['label'] ? $collection['label']:$collection['name'] }}</a>
 
+            @if($app->module('collections')->hasaccess($collection['name'], 'collection_edit'))
             <div class="uk-dropdown">
                 <ul class="uk-nav uk-nav-dropdown">
                     <li class="uk-nav-header">@lang('Actions')</li>
@@ -20,6 +21,7 @@
                     <li class="uk-text-truncate"><a href="@route('/collections/import/collection/'.$collection['name'])">@lang('Import entries')</a></li>
                 </ul>
             </div>
+            @endif
         </li>
     </ul>
 </div>
@@ -42,13 +44,13 @@
             <form class="uk-form" if="{ fields.length }" onsubmit="{ submit }">
 
                 <ul class="uk-tab uk-margin-large-bottom uk-flex uk-flex-center" show="{ App.Utils.count(groups) > 1 }">
-                    <li class="{ !group && 'uk-active'}"><a class="uk-text-capitalize" onclick="{ toggleGroup }">{ App.i18n.get('All') }</a></li>
-                    <li class="{ group==parent.group && 'uk-active'}" each="{group, items in groups}" if="{ items.length }"><a class="uk-text-capitalize" onclick="{ toggleGroup }">{ App.i18n.get(group) }</a></li>
+                    <li riot-class="{ !group && 'uk-active'}"><a class="uk-text-capitalize" onclick="{ toggleGroup }">{ App.i18n.get('All') }</a></li>
+                    <li riot-class="{ group==parent.group && 'uk-active'}" each="{items,group in groups}" show="{ items.length }"><a class="uk-text-capitalize" onclick="{ toggleGroup }">{ App.i18n.get(group) }</a></li>
                 </ul>
 
                 <div class="uk-grid uk-grid-match uk-grid-gutter">
 
-                    <div class="uk-width-medium-{field.width}" each="{field,idx in fields}" show="{!parent.group || (parent.group == field.group) }" no-reorder>
+                    <div riot-class="uk-width-medium-{field.width}" each="{field,idx in fields}" show="{!group || (group == field.group) }" no-reorder>
 
                         <div class="uk-panel">
 
@@ -62,7 +64,7 @@
                             </div>
 
                             <div class="uk-margin">
-                                <cp-field field="{ field }" bind="entry.{ field.localize && parent.lang ? (field.name+'_'+parent.lang):field.name }" cls="uk-form-large"></cp-field>
+                                <cp-field type="{field.type || 'text'}" bind="entry.{ field.localize && parent.lang ? (field.name+'_'+parent.lang):field.name }" opts="{ field.options || {} }"></cp-field>
                             </div>
 
                         </div>
@@ -170,15 +172,17 @@
             this.group = e.item && e.item.group || false;
         }
 
-        submit() {
+        submit(e) {
 
-            App.callmodule('collections:save',[this.collection.name, this.entry]).then(function(data) {
+            if(e) e.preventDefault();
 
-                if (data.result) {
+            App.request('/collections/save_entry/'+this.collection.name,{entry:this.entry}).then(function(entry) {
+
+                if (entry) {
 
                     App.ui.notify("Saving successful", "success");
 
-                    $this.entry = data.result;
+                    $this.entry = entry;
 
                     $this.fields.forEach(function(field){
 
@@ -192,6 +196,8 @@
                 } else {
                     App.ui.notify("Saving failed.", "danger");
                 }
+            }, function(res) {
+                App.ui.notify(res && res.message ? res.message : "Saving failed.", "danger");
             });
         }
 

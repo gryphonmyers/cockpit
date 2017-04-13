@@ -270,12 +270,24 @@ class App implements \ArrayAccess {
     /**
     * stop application (exit)
     */
-    public function stop($data = false){
+    public function stop($data = false, $status = null){
 
         $this->exit = true;
 
-        if ($data!==false) {
-            echo $data;
+        if (is_string($data) && $data) {
+           $this->response->body = $data;
+        }
+
+        if (is_numeric($data) && $data) {
+           $this->response->status = $data;
+        }
+
+        if ($status) {
+           $this->response->status = $status;
+        }
+
+        if ($data || $status) {
+            echo $this->response->flush();
         }
 
         exit;
@@ -840,6 +852,11 @@ class App implements \ArrayAccess {
             $callback = $callback->bindTo($this, $this);
         }
 
+        // autou-register for /route/* also /route
+        if (substr($path, -2) == '/*' && !isset($this->routes[substr($path, 0, -2)])) {
+            $this->bind(substr($path, 0, -2), $callback, $condition);
+        }
+
         $this->routes[$path] = $callback;
     }
 
@@ -1100,9 +1117,9 @@ class App implements \ArrayAccess {
     */
     public function getSiteUrl($withpath = false) {
 
-        $url = ($this->req_is("ssl") ? 'https':'http')."://";
+        $url = ($this->req_is('ssl') ? 'https':'http').'://';
 
-        if ($this->registry['base_port'] != "80") {
+        if (!in_array($this->registry['base_port'], ['80', '443'])) {
             $url .= $this->registry['base_host'].":".$this->registry['base_port'];
         } else {
             $url .= $this->registry['base_host'];

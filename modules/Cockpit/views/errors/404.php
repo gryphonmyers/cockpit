@@ -14,7 +14,7 @@
 
         <img src="@base('assets:app/media/icons/lighthouse.svg')" width="100" height="100">
 
-        <p class="uk-text-large">Uuuups, Page not found.</p>
+        <p class="uk-text-large uk-margin-large">Uuuups, Page not found.</p>
         <p><a href="@route('/')">@lang('Back to start')</a></p>
 
     </div>
