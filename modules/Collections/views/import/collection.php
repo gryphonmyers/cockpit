@@ -97,7 +97,7 @@
                             <hr>
                             @lang('Enter input field:')
                             <div class="uk-form-select">
-                                <input type="text" bind="filterData['{field.name}']">
+                                <input type="text" onchange="{ setFilterData(field.name) }">
                             </div>
                         </div>
                     </td>
