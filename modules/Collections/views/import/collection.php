@@ -93,6 +93,13 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="uk-margin-small-top uk-text-small uk-text-muted" if="{field.type == 'tags' && parent.mapping[field.name] && parent.filter[field.name]}">
+                            <hr>
+                            @lang('Enter input field:')
+                            <div class="uk-form-select">
+                                <input type="text" onchange="{ setFilterData(field.name) }">
+                            </div>
+                        </div>
                     </td>
                     <td>
                         <div class="uk-text-center">
