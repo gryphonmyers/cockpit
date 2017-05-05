@@ -38,6 +38,42 @@
             }
         },
 
+        repeater: function(value, field, desiredFieldName) {
+            function matchVal(val) {
+                if (val) {
+                    var fieldMatch = _.find(field.options.fields, function(currField){
+                        if (desiredFieldName) {
+                            return currField.name == desiredFieldName;
+                        } else {
+                            if (_.isObjectLike(val)) {
+                                if (val.field) {
+                                    return currField.type == val.field.type;
+                                } else {
+                                    return currField.type == val.type;
+                                }
+                            }
+                        }
+                        return null;
+                    });
+                    if (fieldMatch) {
+                        return {
+                            field: fieldMatch,
+                            value: _.isObjectLike(val) ? val.value : val
+                        };
+                    }
+                }
+                return null;
+            }
+
+            if (Array.isArray(value)) {
+                value = _.reject(_.map(value, matchVal), _.isEmpty);
+            } else {
+                value = matchVal(value);
+                value = value ? [value] : null;
+            }
+            this.resolve(value);
+        },
+
         text: function(value) {
             this.resolve(value.toString());
         },
