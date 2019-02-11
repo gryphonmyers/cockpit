@@ -1,4 +1,12 @@
 <?php
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 $this->module('collections')->extend([
 
@@ -551,7 +559,7 @@ $this->module('collections')->extend([
 
                     foreach ($languages as $l) {
 
-                        if (isset($entry["{$name}_{$l}"])) {
+                        if (isset($entry["{$name}_{$l}"]) && $entry["{$name}_{$l}"] !== '') {
 
                             if ($l == $lang) {
 

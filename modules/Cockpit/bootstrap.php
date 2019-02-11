@@ -1,4 +1,12 @@
 <?php
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 // Helpers
 
@@ -248,7 +256,7 @@ $this->module('cockpit')->extend([
                     'blur', 'brighten',
                     'colorize', 'contrast',
                     'darken', 'desaturate',
-                    'edge detect', 'emboss',
+                    'edgeDetect', 'emboss',
                     'flip', 'invert', 'opacity', 'pixelate', 'sepia', 'sharpen', 'sketch'
                 ];
 
@@ -287,6 +295,11 @@ $this->module('cockpit')->extend([
         }
 
         if ($output) {
+
+            if ($output == 'redirect') {
+                $this->app->reroute($this->app->filestorage->getURL($thumbpath));
+            }
+
             header("Content-Type: image/{$ext}");
             header('Content-Length: '.$this->app->filestorage->getSize($thumbpath));
             echo $this->app->filestorage->read($thumbpath);

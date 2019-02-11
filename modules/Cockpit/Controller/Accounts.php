@@ -1,4 +1,12 @@
 <?php
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Cockpit\Controller;
 
@@ -39,6 +47,8 @@ class Accounts extends \Cockpit\AuthController {
         $languages = $this->getLanguages();
         $groups    = $this->module('cockpit')->getGroups();
 
+        $this->app->trigger('cockpit.account.fields', [&$fields, &$account]);
+
         return $this->render('cockpit:views/accounts/account.php', compact('account', 'uid', 'languages', 'groups', 'fields'));
     }
 
@@ -49,11 +59,19 @@ class Accounts extends \Cockpit\AuthController {
         }
 
         $uid       = null;
-        $account   = ['user'=>'', 'email'=>'', 'active'=>true, 'group'=>'admin', 'i18n'=>$this->app->helper('i18n')->locale];
+        $account   = [
+            'user'   => '',
+            'email'  => '',
+            'active' => true,
+            'group'  => 'admin',
+            'i18n'   => $this->app->helper('i18n')->locale
+        ];
 
         $fields    = $this->app->retrieve('config/account/fields', null);
         $languages = $this->getLanguages();
         $groups    = $this->module('cockpit')->getGroups();
+
+        $this->app->trigger('cockpit.account.fields', [&$fields, &$account]);
 
         return $this->render('cockpit:views/accounts/account.php', compact('account', 'uid', 'languages', 'groups', 'fields'));
     }
@@ -200,10 +218,8 @@ class Accounts extends \Cockpit\AuthController {
         }
 
         foreach ($accounts as &$account) {
-
-            if (isset($account['password']))     unset($account['password']);
-            if (isset($account['api_key']))      unset($account['api_key']);
-            if (isset($account['_reset_token'])) unset($account['_reset_token']);
+            unset($account['password'], $account['api_key'], $account['_reset_token']);
+            $this->app->trigger('cockpit.accounts.disguise', [&$account]);
         }
 
         return compact('accounts', 'count', 'pages', 'page');

@@ -95,12 +95,20 @@
                                 <td>{{ ini_get("max_execution_time") }} sec.</td>
                             </tr>
                             <tr>
+                                <td width="30%">OPCache enabled</td>
+                                <td><span class="uk-badge uk-badge-outline uk-text-{{ ini_get("opcache.enable") ? 'success':'danger' }}">{{ ini_get("opcache.enable") ? 'Yes':'No' }}</span></td>
+                            </tr>
+                            <tr>
                                 <td width="30%">Memory limit</td>
                                 <td>{{ ini_get("memory_limit") }}</td>
                             </tr>
                             <tr>
                                 <td width="30%">Upload file size limit</td>
                                 <td>{{ ini_get("upload_max_filesize") }}</td>
+                            </tr>
+                            <tr>
+                                <td width="30%">Realpath Cache</td>
+                                <td>{{ ini_get("realpath_cache_size") }} / {{ ini_get("realpath_cache_ttl") }} (ttl)</td>
                             </tr>
                         </tbody>
                     </table>
@@ -115,22 +123,6 @@
         </div>
 
         <div class="uk-width-medium-1-4">
-
-            <div class="uk-panel uk-panel-box uk-panel-card uk-margin uk-animation-fade" if="{ !loading && version_compare(system.version, _system.version, '<') }">
-
-                <div class="uk-margin uk-text-center">
-                    <img class="uk-svg-adjust uk-text-muted" src="@url('assets:app/media/icons/misc/sysupdate.svg')" width="50" height="50" alt="@lang('System Update')" data-uk-svg />
-                    <p class="uk-h2 uk-text-bold">{ _system.version }</p>
-                </div>
-
-                <button type="button" class="uk-button uk-button-large uk-button-outline uk-text-primary uk-width-1-1" onclick="{updateSystem}">@lang('Update System')</button>
-
-                <div class="uk-text-center uk-alert uk-alert-warning">
-                    @lang('Please consider doing a backup before updating to the latest version.')
-                </div>
-
-            </div>
-
 
             <ul class="uk-nav uk-nav-side" data-uk-switcher="connect:'#settings-info'">
                 <li><a href="#SYSTEM">System</a></li>
@@ -148,19 +140,11 @@
             this._system = {};
             this.system  = {{ json_encode($info['app']) }};
             this.cacheSize = {{ $info['cacheSize'] ? '"'.$info['cacheSize'].'"':0 }};
-            this.loading = true;
+            this.loading = false;
 
             this.on('mount', function() {
 
-                var url = '{{ $update['package.json'] }}';
 
-                this.loading = true;
-
-                fetch_url_contents(url, 'json').then(function(data) {
-                    $this._system = data;
-                    $this.loading = false;
-                    $this.update();
-                });
             });
 
             cleanUpCache() {
@@ -173,15 +157,6 @@
                         $this.cacheSize = 0;
                         $this.update();
                     }, 1000);
-                });
-            }
-
-            updateSystem() {
-
-                App.ui.block('<div class="uk-text-center uk-text-bold uk-h2">'+App.i18n.get('Updating System...')+'</div><p class="uk-text-center"><i class="uk-icon-spinner uk-icon-spin"></i></p>');
-
-                App.request('/settings/update', {v:this._system.version}).then(function() {
-                    location.reload();
                 });
             }
 

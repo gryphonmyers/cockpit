@@ -1,5 +1,4 @@
 <?php
-
 /*
  * Lime.
  *
@@ -628,6 +627,12 @@ class App implements \ArrayAccess {
     * @return String               Rendered view
     */
     public function render($____template, $_____slots = []) {
+
+        $this->trigger('app.render.view', [&$____template, &$_____slots]);
+
+        if (is_string($____template) && $____template) {
+            $this->trigger("app.render.view/{$____template}", [&$____template, &$slots]);
+        }
 
         $_____slots = array_merge($this->viewvars, $_____slots);
         $____layout = $this->layout;

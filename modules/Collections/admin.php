@@ -1,4 +1,12 @@
 <?php
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 $app->on('admin.init', function() {
 
@@ -19,7 +27,7 @@ $app->on('admin.init', function() {
     $this->bindClass('Collections\\Controller\\Admin', 'collections');
 
     // add to modules menu
-    $this('admin')->addMenuItem('modules', [
+    $this->helper('admin')->addMenuItem('modules', [
         'label' => 'Collections',
         'icon'  => 'collections:icon.svg',
         'route' => '/collections',

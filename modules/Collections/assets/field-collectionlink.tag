@@ -22,7 +22,10 @@
 
             <div class="uk-panel uk-panel-card uk-panel-box">
 
-                <div>{ link.display }</div>
+                <div class="uk-flex">
+                    <span class="uk-flex-item-1">{ getDisplay(link) }</span>
+                    <a class="uk-margin-small-left" href="{ App.route('/collections/entry/'+opts.link+'/'+link._id) }"><i class="uk-icon-link"></i></a>
+                </div>
 
                 <div class="uk-panel-box-footer uk-text-small uk-padding-bottom-remove">
                     <a class="uk-margin-small-right" onclick="{ showDialog }"><i class="uk-icon-link"></i> { App.i18n.get('Link item') }</a>
@@ -40,7 +43,10 @@
                     <li each="{l,index in link}" data-idx="{ index }">
                         <div class="uk-grid uk-grid-small uk-text-small">
                             <div><a onclick="{ removeListItem }"><i class="uk-icon-trash-o"></i></a></div>
-                            <div class="uk-flex-item-1">{ l.display }</div>
+                            <div class="uk-flex uk-flex-item-1">
+                                <span class="uk-flex-item-1">{ parent.getDisplay(l) }</span>
+                                <a class="uk-margin-small-left" href="{ App.route('/collections/entry/'+parent.opts.link+'/'+l._id) }"><i class="uk-icon-link"></i></a>
+                            </div>
                         </div>
                     </li>
                 </ul>
@@ -133,7 +139,7 @@
 
     this.mixin(RiotBindMixin);
 
-    var $this = this, modal, collections, _init = function(){
+    var $this = this, modal, collections, cache = {}, _init = function(){
 
         this.error = this.collection ? false:true;
 
@@ -235,6 +241,8 @@
         } else {
             this.link = entry;
         }
+        
+        cache[entry._id] = entry;
 
         setTimeout(function(){
             modal.hide();
@@ -258,6 +266,8 @@
         var entry;
 
         this.selected.forEach(function(_entry) {
+            
+            cache[_entry._id] = _entry;
             entry = {
                 _id: _entry._id,
                 link: $this.collection.name,
@@ -398,6 +408,35 @@
                 this.selected.splice(idx, 1);
             }
         }
+    }
+    
+    getDisplay(link) {
+        
+        var display = '...';
+        
+        if (!cache[link._id]) {
+            
+            cache[link._id] = App.request('/collections/find', {collection:this.collection.name, options:{filter:{_id:link._id}}}).then(function(data){
+
+                if (!data.entries.length) {
+                    link.display = 'n/a';
+                    this.update();
+                    return;
+                }
+                
+                var _entry = data.entries[0];
+                
+                link.display = _entry[opts.display] || _entry[$this.collection.fields[0].name] || 'n/a';
+                
+                this.update();
+
+            }.bind(this))
+            
+        } else {
+            display = link.display
+        }
+        
+        return display;
     }
 
 

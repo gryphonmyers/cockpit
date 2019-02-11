@@ -1,4 +1,13 @@
 <?php
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Cockpit\Controller;
 
 class RestApi extends \LimeExtra\Controller {
@@ -167,10 +176,8 @@ class RestApi extends \LimeExtra\Controller {
         $accounts = $this->app->storage->find('cockpit/accounts', $options)->toArray();
 
         foreach ($accounts as &$account) {
-
-            if (isset($account['password']))     unset($account['password']);
-            if (isset($account['api_key']))      unset($account['api_key']);
-            if (isset($account['_reset_token'])) unset($account['_reset_token']);
+            unset($account['password'], $account['api_key'], $account['_reset_token']);
+            $this->app->trigger('cockpit.accounts.disguise', [&$account]);
         }
 
         return $accounts;
@@ -188,7 +195,7 @@ class RestApi extends \LimeExtra\Controller {
             'quality' => intval($this->param('q', 100)),
             'rebuild' => intval($this->param('r', false)),
             'base64'  => intval($this->param('b64', false)),
-            'output'  => intval($this->param('o', false))
+            'output'  => $this->param('o', false)
         ];
 
         // Set single filter when available
@@ -196,7 +203,7 @@ class RestApi extends \LimeExtra\Controller {
             'blur', 'brighten',
             'colorize', 'contrast',
             'darken', 'desaturate',
-            'edge detect', 'emboss',
+            'edgeDetect', 'emboss',
             'flip', 'invert', 'opacity', 'pixelate', 'sepia', 'sharpen', 'sketch'
         ] as $f) {
             if ($this->param($f)) $options[$f] = $this->param($f);

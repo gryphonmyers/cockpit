@@ -1,4 +1,12 @@
 <?php
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Cockpit;
 
@@ -18,7 +26,8 @@ class AuthController extends \LimeExtra\Controller {
 
         parent::__construct($app);
 
-        $this->user = $app['user'] = $user;
+        $this->user  = $user;
+        $app['user'] = $user;
 
         $controller = strtolower(str_replace('\\', '.', get_class($this)));
 

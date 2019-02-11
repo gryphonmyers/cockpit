@@ -1,4 +1,13 @@
 <?php
+/**
+ * This file is part of the Cockpit project.
+ *
+ * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Collections\Controller;
 
 class RestApi extends \LimeExtra\Controller {
@@ -37,12 +46,10 @@ class RestApi extends \LimeExtra\Controller {
         if ($populate = $this->param('populate', null)) $options['populate'] = $populate;
 
         // cast string values if get request
-        if ($filter && isset($_GET['filter'])) $options['filter'] = $this->_fixStringBooleanValues($filter);
-        // Note: we only coerce numeric values for fields, because some int values get stored in the db as strings and thus become unqueryable when passing int filter values
-        if ($fields && isset($_GET['fields'])) $options['fields'] = $this->_fixStringNumericValues($this->_fixStringBooleanValues($fields));
+        if ($filter && isset($_GET['filter'])) $options['filter'] = $this->app->helper('utils')->fixStringBooleanValues($filter);
+        if ($fields && isset($_GET['fields'])) $options['fields'] = $this->app->helper('utils')->fixStringNumericValues($fields);
 
         // fields filter
-
         if ($fieldsFilter = $this->param('fieldsFilter', [])) $options['fieldsFilter'] = $fieldsFilter;
         if ($lang = $this->param('lang', false)) $fieldsFilter['lang'] = $lang;
         if ($ignoreDefaultFallback = $this->param('ignoreDefaultFallback', false)) $fieldsFilter['ignoreDefaultFallback'] = in_array($ignoreDefaultFallback, ['1', '0']) ? boolval($ignoreDefaultFallback) : $ignoreDefaultFallback;
@@ -242,55 +249,5 @@ class RestApi extends \LimeExtra\Controller {
         }
 
         return $extended ? $collections : array_keys($collections);
-    }
-
-    protected function _fixStringNumericValues(&$array) {
-        if (!is_array($array)) {
-            return $array;
-        }
-
-        foreach ($array as $k => $v) {
-
-            if (is_array($array[$k])) {
-                $array[$k] = $this->_fixStringBooleanValues($array[$k]);
-            }
-
-            if (is_string($v)) {
-
-                if (is_numeric($v)) {
-                    $v = filter_var($v, FILTER_VALIDATE_INT);
-                }
-            }
-
-            $array[$k] = $v;
-        }
-
-        return $array;
-    }
-    
-
-    protected function _fixStringBooleanValues(&$array) {
-
-        if (!is_array($array)) {
-            return $array;
-        }
-
-        foreach ($array as $k => $v) {
-
-            if (is_array($array[$k])) {
-                $array[$k] = $this->_fixStringBooleanValues($array[$k]);
-            }
-
-            if (is_string($v)) {
-
-                if ($v === 'true' || $v === 'false') {
-                    $v = filter_var($v, FILTER_VALIDATE_BOOLEAN);
-                }
-            }
-
-            $array[$k] = $v;
-        }
-
-        return $array;
     }
 }
