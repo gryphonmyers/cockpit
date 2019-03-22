@@ -7,6 +7,10 @@
 </style>
 @endif
 
+<script>
+    window.__collectionEntry = {{ json_encode($entry) }};
+</script>
+
 <div>
     <ul class="uk-breadcrumb">
         <li><a href="@route('/collections')">@lang('Collections')</a></li>
@@ -56,11 +60,11 @@
 
                     <div class="uk-width-medium-{field.width}" each="{field,idx in fields}" show="{checkVisibilityRule(field) && (!group || (group == field.group)) }" if="{ hasFieldAccess(field.name) }" no-reorder>
 
-                        <div class="uk-panel">
+                        <cp-fieldcontainer>
 
                             <label>
 
-                                <span class="uk-text-bold">{ field.label || field.name }</span>
+                                <span class="uk-text-bold"><i class="uk-icon-pencil-square uk-margin-small-right"></i> { field.label || field.name }</span>
 
                                 <span if="{ field.localize }" data-uk-dropdown="mode:'click'">
                                     <a class="uk-icon-globe" title="@lang('Localized field')" data-uk-tooltip="pos:'right'"></a>
@@ -83,7 +87,7 @@
                                 <cp-field type="{field.type || 'text'}" bind="entry.{ field.localize && parent.lang ? (field.name+'_'+parent.lang):field.name }" opts="{ field.options || {} }"></cp-field>
                             </div>
 
-                        </div>
+                        </cp-fieldcontainer>
 
                     </div>
 
@@ -164,7 +168,7 @@
         this.fieldsidx    = {};
         this.excludeFields = {{ json_encode($excludeFields) }};
 
-        this.entry        = {{ json_encode($entry) }};
+        this.entry        = window.__collectionEntry;
 
         this.languages    = App.$data.languages;
         this.groups       = {Main:[]};
@@ -234,6 +238,26 @@
             // wysiwyg cmd + save hack
             App.$(this.root).on('submit', function(e, component) {
                 if (component) $this.submit(e);
+            });
+
+            // lock resource
+            var idle = setInterval(function() {
+                if (!$this.entry._id) return;
+                App.request('/cockpit/utils/lockResourceId/'+$this.entry._id, {});
+            }, 120000);
+
+            // unlock resource
+            window.addEventListener("beforeunload", function (event) {
+
+                clearInterval(idle);
+
+                if (!$this.entry._id) return;
+
+                if (navigator.sendBeacon) {
+                    navigator.sendBeacon(App.route('/cockpit/utils/unlockResourceId/'+$this.entry._id));
+                } else {
+                    App.request('/cockpit/utils/unlockResourceId/'+$this.entry._id, {});
+                }
             });
         });
 

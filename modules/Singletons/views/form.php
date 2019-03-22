@@ -5,6 +5,10 @@
 </style>
 @endif
 
+<script>
+    window.__singletonData = {{ json_encode($data) }} || {};
+</script>
+
 <div>
 
     <ul class="uk-breadcrumb">
@@ -57,11 +61,11 @@
 
                         <div class="uk-width-medium-{field.width}" each="{field,idx in fields}" show="{checkVisibilityRule(field) && (!group || (group == field.group)) }" if="{ hasFieldAccess(field.name) }" no-reorder>
 
-                            <div class="uk-panel">
+                            <cp-fieldcontainer>
 
                                 <label>
 
-                                    <span class="uk-text-bold">{ field.label || field.name }</span>
+                                    <span class="uk-text-bold"><i class="uk-icon-pencil-square uk-margin-small-right"></i> { field.label || field.name }</span>
 
                                     <span if="{ field.localize }" data-uk-dropdown="mode:'click'">
                                         <a class="uk-icon-globe" title="@lang('Localized field')" data-uk-tooltip="pos:'right'"></a>
@@ -84,7 +88,7 @@
                                     <cp-field type="{field.type || 'text'}" bind="{ parent.getBindValue(field) }" opts="{ field.options || {} }"></cp-field>
                                 </div>
 
-                            </div>
+                            </cp-fieldcontainer>
 
                         </div>
 
@@ -153,15 +157,15 @@
 
             this.mixin(RiotBindMixin);
 
-            this.singleton    = {{ json_encode($singleton) }};
+            this.singleton = {{ json_encode($singleton) }};
             this.fields    = this.singleton.fields;
             this.fieldsidx = {};
 
-            this.data      = {{ json_encode($data) }} || {};
+            this.data      = window.__singletonData;
 
             this.languages = App.$data.languages;
-            this.groups       = {main:[]};
-            this.group        = 'main';
+            this.groups    = {main:[]};
+            this.group     = 'main';
 
             // fill with default values
             this.fields.forEach(function(field){
@@ -218,6 +222,23 @@
                 // wysiwyg cmd + save hack
                 App.$(this.root).on('submit', function(e, component) {
                     if (component) $this.submit(e);
+                });
+
+                // lock resource
+                var idle = setInterval(function() {
+                    App.request('/cockpit/utils/lockResourceId/'+'singleton_'+$this.singleton.name, {});
+                }, 120000);
+
+                // unlock resource
+                window.addEventListener("beforeunload", function (event) {
+
+                    clearInterval(idle);
+
+                    if (navigator.sendBeacon) {
+                        navigator.sendBeacon(App.route('/cockpit/utils/unlockResourceId/'+'singleton_'+$this.singleton.name));
+                    } else {
+                        App.request('/cockpit/utils/unlockResourceId/'+'singleton_'+$this.singleton.name, {});
+                    }
                 });
             });
 

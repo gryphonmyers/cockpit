@@ -68,6 +68,7 @@ $assets = [
     'assets:app/js/app.utils.js',
     'assets:app/js/codemirror.js',
     'assets:app/components/cp-actionbar.js',
+    'assets:app/components/cp-fieldcontainer.js',
     'cockpit:assets/components.js',
     'cockpit:assets/cockpit.js',
 
@@ -201,32 +202,6 @@ $app->on('admin.dashboard.widgets', function($widgets) {
 $app->on('after', function() {
 
     switch ($this->response->status) {
-        case 500:
-
-            if ($this['debug']) {
-
-                if ($this->req_is('ajax') || COCKPIT_API_REQUEST) {
-                    $this->response->body = json_encode(['error' => json_decode($this->response->body, true)]);
-                } else {
-                    $this->response->body = $this->render('cockpit:views/errors/500-debug.php', ['error' => json_decode($this->response->body, true)]);
-                }
-
-            } else {
-
-                if ($this->req_is('ajax') || COCKPIT_API_REQUEST) {
-                    $this->response->body = '{"error": "500", "message": "system error"}';
-                } else {
-                    $this->response->body = $this->view('cockpit:views/errors/500.php');
-                }
-            }
-
-            $this->trigger('cockpit.request.error', ['500']);
-
-            if (function_exists('cockpit_error_handler')) {
-                cockpit_error_handler(error_get_last());
-            }
-
-            break;
 
         case 401:
 

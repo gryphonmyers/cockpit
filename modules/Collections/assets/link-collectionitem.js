@@ -35,10 +35,18 @@
         }
 
         setTimeout(() => {
-            linkCache[v._id].then(display => document.getElementById(v._id).innerText = display)
+            linkCache[v._id].then(display => {
+
+                let spans = document.querySelectorAll(`[data-collection-display-id='${v._id}']`);
+
+                [...spans].forEach(span => {
+                    span.innerText = display;
+                    span.removeAttribute('data-collection-display-id');
+                });
+            })
         });
 
-        return `<span id="${v._id}"><i class="uk-icon-spin uk-icon-spinner uk-text-muted"></i></span>`;
+        return `<span data-collection-display-id="${v._id}"><i class="uk-icon-spin uk-icon-spinner uk-text-muted"></i></span>`;
     };
 
     function selectCollectionItem(fn, options) {
@@ -89,17 +97,21 @@
 
     App.$(document).on('init-wysiwyg-editor', function(e, editor){
 
-        editor.addMenuItem('pageurl', {
-            icon: 'link',
-            text: 'Link Collection Item',
-            onclick: function(){
+        tinymce.PluginManager.add('cpcollectionlink', function(ed) {
 
-                selectCollectionItem(function(data){
-                    editor.insertContent('<a href="' + data.url + '" alt="">'+data.title+'</a>');
-                }, {url:'',title:''});
-            },
-            context: 'insert',
-            prependToContext: true
+            ed.addMenuItem('pageurl', {
+                icon: 'link',
+                text: App.i18n.get('Link Collection Item'),
+                onclick: function(){
+
+                    selectCollectionItem(function(data){
+                        ed.insertContent('<a href="' + data.url + '" alt="">'+data.title+'</a>');
+                    }, {url:'',title:''});
+                },
+                context: 'insert',
+                prependToContext: true
+            });
+
         });
 
     });

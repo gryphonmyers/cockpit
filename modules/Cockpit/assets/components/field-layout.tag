@@ -120,13 +120,13 @@
 
                     <div class="uk-panel">
 
-                        <label class="uk-text-bold">{ field.label || field.name }</label>
+                        <label class="uk-text-small uk-text-bold"><i class="uk-icon-pencil-square uk-margin-small-right"></i> { field.label || field.name }</label>
 
-                            <div class="uk-margin uk-text-small uk-text-muted">{ field.info || ' ' }</div>
+                        <div class="uk-margin-small-top uk-text-small uk-text-muted" show="{field.info}">{ field.info }</div>
 
-                            <div class="uk-margin">
-                                <cp-field type="{field.type || 'text'}" bind="settingsComponent.settings.{field.name}" opts="{ field.options || {} }"></cp-field>
-                            </div>
+                        <div class="uk-margin-small-top">
+                            <cp-field type="{field.type || 'text'}" bind="settingsComponent.settings.{field.name}" opts="{ field.options || {} }"></cp-field>
+                        </div>
                     </div>
 
                 </div>
@@ -476,7 +476,7 @@
 <field-layout-grid>
 
     <div class="uk-text-center uk-placeholder" if="{!columns.length}">
-        <a class="uk-button uk-button-link" onclick="{ addColumn }">{ App.i18n.get('Add Colum') }</a>
+        <a class="uk-button uk-button-link" onclick="{ addColumn }">{ App.i18n.get('Add Column') }</a>
     </div>
 
     <div class="uk-sortable uk-grid uk-grid-match uk-grid-small uk-grid-width-medium-1-{columns.length > 4 ? 1 : columns.length}" show="{columns.length}" ref="columns" data-uk-sortable="animation:false">

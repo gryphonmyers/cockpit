@@ -51,4 +51,46 @@ class Utils extends \Cockpit\AuthController {
 
         return 0;
     }
+
+    public function revisionsRemove() {
+
+        if ($rid = $this->param('rid')) {
+            $this->app->helper('revisions')->remove($rid);
+            return true;
+        }
+
+        return false;
+    }
+
+    public function revisionsRemoveAll() {
+
+        if ($oid = $this->param('oid')) {
+            $this->app->helper('revisions')->removeAll($oid);
+            return true;
+        }
+
+        return false;
+    }
+
+    public function isResourceLocked($resourceId) {
+
+        $meta = $this->app->helper('admin')->isResourceLocked($resourceId);
+
+        if ($meta) {
+            return array_merge($meta, ['locked' => true]);
+        }
+
+        return ['locked' => false];
+    }
+
+    public function lockResourceId($resourceId) {
+        $meta = $this->app->helper('admin')->lockResourceId($resourceId);
+        return $meta;
+    }
+
+    public function unlockResourceId($resourceId) {
+        $this->app->helper('admin')->unlockResourceId($resourceId);
+
+        return ['success' => true];
+    }
 }

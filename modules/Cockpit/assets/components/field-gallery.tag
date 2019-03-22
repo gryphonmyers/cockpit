@@ -12,13 +12,16 @@
             <div data-idx="{ idx }" each="{ img,idx in images }">
                 <div class="uk-panel uk-panel-box uk-panel-thumbnail uk-panel-framed uk-visible-hover">
 
-                        <div class="uk-flex uk-flex-middle uk-flex-center" style="min-height:120px;">
-                            <div class="uk-width-1-1 uk-text-center">
-                                <cp-thumbnail src="{ img.path.match(/^(http\:|https\:|\/\/)/) ? img.path : (SITE_URL+'/'+img.path.replace(/^\//, '')) }" width="400" height="250"></cp-thumbnail>
+                        <div class="uk-bg-transparent-pattern uk-position-relative" style="min-height:120px;">
+                            <canvas class="uk-responsive-width" width="200" height="150"></canvas>
+                            <div class="uk-position-absolute uk-position-cover uk-flex uk-flex-middle">
+                                <div class="uk-width-1-1 uk-text-center">
+                                    <cp-thumbnail src="{ img.path.match(/^(http\:|https\:|\/\/)/) ? img.path : (SITE_URL+'/'+img.path.replace(/^\//, '')) }" height="120"></cp-thumbnail>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="uk-invisible">
+                        <div class="uk-invisible uk-margin-top">
                             <ul class="uk-grid uk-grid-small uk-flex-center uk-text-small">
                                 <li data-uk-dropdown="pos:'bottom-center'">
                                     <a class="uk-text-muted" onclick="{ parent.selectAsset }" title="{ App.i18n.get('Select image') }" data-uk-tooltip><i class="uk-icon-image"></i></a>
@@ -71,8 +74,8 @@
 
                         <div class="uk-panel">
 
-                            <label class="uk-text-bold">
-                                { field.label || name }
+                            <label class="uk-text-small uk-text-bold">
+                                <i class="uk-icon-pencil-square uk-margin-small-right"></i> { field.label || name }
                             </label>
 
                             <div class="uk-margin uk-text-small uk-text-muted">
@@ -235,7 +238,7 @@
             this.image = this.images[e.item.idx];
 
             setTimeout(function() {
-                UIkit.modal($this.refs.modalmeta).show().on('close.uk.modal', function(){
+                UIkit.modal($this.refs.modalmeta, {modal:false}).show().on('close.uk.modal', function(){
                     $this.image = null;
                 });
             }, 50)

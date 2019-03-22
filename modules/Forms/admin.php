@@ -66,7 +66,7 @@ $app->on('admin.init', function() {
     // dashboard widgets
     $this->on('admin.dashboard.widgets', function($widgets) {
 
-        $forms = $this->module('forms')->forms(true);
+        $forms = $this->module('forms')->forms(false);
 
         $widgets[] = [
             'name'    => 'forms',
@@ -76,5 +76,17 @@ $app->on('admin.init', function() {
 
     }, 100);
 
+    // register events for autocomplete
+    $this->on('cockpit.webhook.events', function($triggers) {
+
+        foreach([
+            'forms.save.after',
+            'forms.save.after.{$name}',
+            'forms.save.before',
+            'forms.save.before.{$name}',
+            'forms.submit.after',
+            'forms.submit.before',
+        ] as &$evt) { $triggers[] = $evt; }
+    });
 
 });

@@ -13,12 +13,17 @@
  */
 define('COCKPIT_START_TIME', microtime(true));
 
-// Autoload vendor libs
-include(__DIR__.'/lib/vendor/autoload.php');
-
 if (!defined('COCKPIT_CLI')) {
     define('COCKPIT_CLI', PHP_SAPI == 'cli');
 }
+
+// Autoload vendor libs
+include(__DIR__.'/lib/vendor/autoload.php');
+
+// include core classes for better performance
+include(__DIR__.'/lib/Lime/App.php');
+include(__DIR__.'/lib/LimeExtra/App.php');
+include(__DIR__.'/lib/LimeExtra/Controller.php');
 
 /*
  * Autoload from lib folder (PSR-0)
@@ -89,7 +94,7 @@ function cockpit($module = null) {
         // load config
         $config = array_replace_recursive([
 
-            'debug'        => preg_match('/(localhost|::1|\.dev)$/', @$_SERVER['SERVER_NAME']),
+            'debug'        => preg_match('/(localhost|::1|\.local)$/', @$_SERVER['SERVER_NAME']),
             'app.name'     => 'Cockpit',
             'base_url'     => COCKPIT_BASE_URL,
             'base_route'   => COCKPIT_BASE_ROUTE,
@@ -235,6 +240,8 @@ function cockpit($module = null) {
                 } else {
                     $body = $app->req_is('ajax') || COCKPIT_API_REQUEST ? '{"error": "500", "message": "system error"}' : $app->view('cockpit:views/errors/500.php');
                 }
+
+                $app->trigger('error', [$error, $exception]);
 
                 header('HTTP/1.0 500 Internal Server Error');
                 echo $body;

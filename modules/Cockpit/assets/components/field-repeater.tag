@@ -5,20 +5,25 @@
     </div>
 
     <div show="{mode=='edit' && items.length}">
-        <div class="uk-margin uk-panel-box uk-panel-card" each="{ item,idx in items }" data-idx="{idx}">
+        <div class="uk-margin-small-bottom uk-panel-box uk-panel-card" each="{ item,idx in items }" data-idx="{idx}">
 
-            <div class="uk-badge uk-display-block uk-margin">{ App.Utils.ucfirst(typeof(item.field) == 'string' ? item.field : (item.field.label || item.field.type)) }</div>
-
-            <cp-field type="{ item.field.type || 'text' }" bind="items[{ idx }].value" opts="{ item.field.options || {} }"></cp-field>
-
-            <div class="uk-panel-box-footer uk-bg-light">
-                <a onclick="{ parent.remove }"><i class="uk-icon-trash-o"></i></a>
+            <div class="uk-flex uk-flex-middle">
+                <a onclick="{ parent.toggleVisibility }" class="uk-badge uk-display-block uk-text-left uk-flex-item-1 {!parent.visibility[idx] && 'uk-badge-outline uk-text-muted'}" riot-style="{!parent.visibility[idx] && 'border-color: rgba(0,0,0,0)'}">
+                    <i class="uk-icon-ellipsis-v uk-margin-small-left uk-margin-small-right"></i> { App.Utils.ucfirst(typeof(item.field) == 'string' ? item.field : (item.field.label || item.field.type)) } <raw content="{ parent.getOrderPreview(item,idx) }"></raw>
+                </a>
+                <a class="uk-margin-left" onclick="{ parent.toggleVisibility }"><i class="uk-icon-eye{parent.visibility[idx] && '-slash uk-text-muted'}"></i></a>
+                <a class="uk-margin-left" onclick="{ parent.remove }"><i class="uk-icon-trash-o uk-text-danger"></i></a>
             </div>
+
+            <div class="uk-margin" if="{parent.visibility[idx]}">
+                <cp-field type="{ item.field.type || 'text' }" bind="items[{ idx }].value" opts="{ item.field.options || {} }"></cp-field>
+            </div>
+
         </div>
     </div>
 
     <div ref="itemscontainer" class="uk-sortable" show="{ mode=='reorder' && items.length }">
-        <div class="uk-margin uk-panel-box uk-panel-card" each="{ item,idx in items }" data-idx="{idx}">
+        <div class="uk-margin-small-bottom uk-panel-box uk-panel-card" each="{ item,idx in items }" data-idx="{idx}">
             <div class="uk-grid uk-grid-small">
                 <div class="uk-flex-item-1"><i class="uk-icon-bars uk-margin-small-right"></i> { App.Utils.ucfirst(typeof(item.field) == 'string' ? item.field : (item.field.label || item.field.type)) }</div>
                 <div class="uk-text-muted uk-text-small uk-text-truncate"> <raw content="{ parent.getOrderPreview(item,idx) }"></raw></div>
@@ -53,6 +58,8 @@
         this.field  = {type:'text'};
         this.fields = false;
         this.mode   = 'edit';
+
+        this.visibility = {};
 
         this.on('mount', function() {
 
@@ -101,14 +108,30 @@
             } else {
                 this.items.push({field:this.field, value:null});
             }
+
+            this.visibility[this.items.length-1] = true;
         }
 
         remove(e) {
-            this.items.splice(e.item.idx, 1);
+            if (this.opts && this.opts.safeDelete) {
+                UIkit.modal.confirm(App.i18n.get("Confirm removal?"), function() {
+                    $this.items.splice(e.item.idx, 1);
+                    $this.update();
+                });
+            } else {
+                this.items.splice(e.item.idx, 1);
+            }
         }
 
         switchreorder() {
+
+            this.visibility = {};
+
             $this.mode = $this.mode == 'edit' ? 'reorder':'edit';
+        }
+
+        toggleVisibility(e) {
+            this.visibility[e.item.idx] = this.visibility[e.item.idx] ? false:true;
         }
 
         updateorder() {
@@ -137,15 +160,16 @@
 
             if (item.field && item.field.type && item.field.options && (opts.display || item.field.options.display)) {
 
-                var value, display = opts.display || item.field.options.display;
+                var value, display = opts.display || item.field.options.display, ftype = item.field.type;
 
                 if (item.field.options.display == '$value') {
-                    value = item.value;
+                    value = App.Utils.renderValue(item.field.type, item.value, item.field);
                 } else {
                     value = _.get(item.value, display) || 'Item '+(idx+1);
                 }
 
-                return App.Utils.renderValue(item.field.type, value);
+                return value;
+
             }
 
             return 'Item '+(idx+1);
